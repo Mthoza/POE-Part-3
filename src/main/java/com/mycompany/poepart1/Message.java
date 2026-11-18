@@ -196,13 +196,24 @@ public class Message {
     }
     
 // these are the 5 parameter constructor (used by Part 3 QuickChat and MessageStoreTest)
-public Message(String messageID, int messageNumber, String sender, String recipient, String messageText) {
+public Message(String messageID, int messageNumber, String sender, String recipient, String messageText){
     this.messageID = messageID;
     this.messageNumber = messageNumber;
     this.sender = sender;
     this.recipient = recipient;
     this.messageText = messageText;
     this.messageHash = createMessageHash();
+}
+public String getSender() {
+    return sender;
+}
+
+public String getRecipient() {
+    return recipient;
+}
+
+public String getMessageText() {
+    return messageText;
 }
 }
 /* References
