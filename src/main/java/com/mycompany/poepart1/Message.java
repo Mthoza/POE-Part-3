@@ -105,19 +105,21 @@ public class Message {
      Returns the message that must be shown to the user.
      */
     public String sentMessage(int choice) {
-        if (choice == 1) {
-            sentMessages.add(this);
-            return "Message successfully sent.";
-        } else if (choice == 2) {
-            return "Press 0 to delete the message.";
-        } else if (choice == 3) {
-            if (storeMessage()) {
-                return "Message successfully stored.";
-            }
-            return "Message could not be stored.";
+    if (choice == 1) {
+        sentMessages.add(this);
+        MessageStore.addMessage(this, MessageStore.FLAG_SENT);
+        return "Message successfully sent.";
+    } else if (choice == 2) {
+        MessageStore.addMessage(this, MessageStore.FLAG_DISREGARD);
+        return "Press 0 to delete the message.";
+    } else if (choice == 3) {
+        if (storeMessage()) {
+            return "Message successfully stored.";
         }
-        return "Invalid option.";
+        return "Message could not be stored.";
     }
+    return "Invalid option.";
+}
 
     // Returns the full details of this message in the required order
     public String getDetails() {
@@ -147,34 +149,11 @@ public class Message {
      rules on json.org and FileWriter is used as shown in the Oracle docs
      (see references at the bottom of this file).
      */
-    public boolean storeMessage() {
-        storedMessages.add(this);
-
-        String json = "[\n";
-        for (int i = 0; i < storedMessages.size(); i++) {
-            Message m = storedMessages.get(i);
-            json = json + "  {\n";
-            json = json + "    \"messageID\": \"" + clean(m.messageID) + "\",\n";
-            json = json + "    \"messageNumber\": " + m.messageNumber + ",\n";
-            json = json + "    \"messageHash\": \"" + clean(m.messageHash) + "\",\n";
-            json = json + "    \"recipient\": \"" + clean(m.recipient) + "\",\n";
-            json = json + "    \"message\": \"" + clean(m.messageText) + "\"\n";
-            json = json + "  }";
-            if (i < storedMessages.size() - 1) {
-                json = json + ",";
-            }
-            json = json + "\n";
-        }
-        json = json + "]";
-
-        try (FileWriter writer = new FileWriter(JSON_FILE)) {
-            writer.write(json);
-            return true;
-        } catch (IOException e) {
-            System.out.println("Error saving file: " + e.getMessage());
-            return false;
-        }
-    }
+   public boolean storeMessage() {
+    storedMessages.add(this);
+    MessageStore.addMessage(this, MessageStore.FLAG_STORED);
+    return MessageStore.saveStoredMessagesToJson();
+}
 
     // Escapes quotes, backslashes and new lines so the text is valid inside JSON
     private static String clean(String text) {
