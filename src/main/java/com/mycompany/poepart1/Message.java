@@ -162,9 +162,10 @@ public class Message {
 
     // Clears both lists (used by the unit tests so every test starts fresh)
     public static void clearAll() {
-        sentMessages.clear();
-        storedMessages.clear();
-    }
+    sentMessages.clear();
+    storedMessages.clear();
+    MessageStore.clearAll();
+}
 
     public String getMessageID() {
         return messageID;
