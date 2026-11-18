@@ -30,6 +30,7 @@ public class Message {
     private String recipient;
     private String messageText;
     private String messageHash;
+    private String sender;
 
     // The hash is created automatically as soon as the message is created
     public Message(String messageID, int messageNumber, String recipient, String messageText) {
@@ -193,6 +194,16 @@ public class Message {
     public String getMessageHash() {
         return messageHash;
     }
+    
+// these are the 5 parameter constructor (used by Part 3 QuickChat and MessageStoreTest)
+public Message(String messageID, int messageNumber, String sender, String recipient, String messageText) {
+    this.messageID = messageID;
+    this.messageNumber = messageNumber;
+    this.sender = sender;
+    this.recipient = recipient;
+    this.messageText = messageText;
+    this.messageHash = createMessageHash();
+}
 }
 /* References
 Oracle (2026) FileWriter (Java SE 21 API). Available at:
