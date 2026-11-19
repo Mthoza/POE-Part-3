@@ -1,7 +1,5 @@
 package com.mycompany.poepart1;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -90,16 +88,19 @@ public class Message {
      in capital letters. Example: 00:0:HITONIGHT
      */
     public String createMessageHash() {
-        String[] words = messageText.trim().split("\\s+");
-
-        // remove punctuation such as "?" or "," so only letters and numbers are left
-        String firstWord = words[0].replaceAll("[^A-Za-z0-9]", "");
-        String lastWord = words[words.length - 1].replaceAll("[^A-Za-z0-9]", "");
-
-        String firstTwoNumbers = messageID.substring(0, 2);
-        return (firstTwoNumbers + ":" + messageNumber + ":" + firstWord + lastWord).toUpperCase();
+    String trimmed = messageText.trim();
+    if (trimmed.isEmpty()) {
+        return (messageID.substring(0, 2) + ":" + messageNumber + ":").toUpperCase();
     }
+    String[] words = trimmed.split("\\s+");
 
+    // remove punctuation such as "?" or "," so only letters and numbers are left
+    String firstWord = words[0].replaceAll("[^A-Za-z0-9]", "");
+    String lastWord = words[words.length - 1].replaceAll("[^A-Za-z0-9]", "");
+
+    String firstTwoNumbers = messageID.substring(0, 2);
+    return (firstTwoNumbers + ":" + messageNumber + ":" + firstWord + lastWord).toUpperCase();
+}
     /*
      Does what the user chose: 1 = send, 2 = disregard, 3 = store for later.
      Returns the message that must be shown to the user.
@@ -154,11 +155,6 @@ public class Message {
     MessageStore.addMessage(this, MessageStore.FLAG_STORED);
     return MessageStore.saveStoredMessagesToJson();
 }
-
-    // Escapes quotes, backslashes and new lines so the text is valid inside JSON
-    private static String clean(String text) {
-        return text.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-    }
 
     // Clears both lists (used by the unit tests so every test starts fresh)
     public static void clearAll() {
