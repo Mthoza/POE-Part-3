@@ -64,6 +64,17 @@ public class QuickChat {
 
     // Submenu for Option 4: Stored Messages (Requirements 2a - 2f)
     private static void storedMessagesMenu(Scanner input) {
+        // read messages.json into the arrays and show the stored messages to the user
+        int added = MessageStore.readStoredMessagesFromJson();
+        ArrayList<String> stored = MessageStore.getStoredMessages();
+        System.out.println("\nStored messages read from " + MessageStore.JSON_FILE + " (" + added + " new):");
+        if (stored.isEmpty()) {
+            System.out.println("There are no stored messages yet.");
+        }
+        for (int i = 0; i < stored.size(); i++) {
+            System.out.println((i + 1) + ". " + stored.get(i));
+        }
+
         String subChoice = "";
         while (!subChoice.equals("g")) {
             System.out.println("\n--- Stored Messages Menu ---");
@@ -87,7 +98,7 @@ public class QuickChat {
                 System.out.println("Enter the Message ID to search:");
                 String id = input.nextLine().trim();
                 String msg = MessageStore.getMessageByID(id);
-                if (msg.equals("Message ID not found.")) {
+                if (msg.equals(MessageStore.ID_NOT_FOUND)) {
                     System.out.println(msg);
                 } else {
                     System.out.println("Recipient: " + MessageStore.getRecipientByID(id));

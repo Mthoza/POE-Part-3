@@ -146,7 +146,7 @@ public class MessageStoreTest {
 
     @Test
     public void testSearchForMessageIDNotFound() {
-        assertEquals("Message ID not found.", MessageStore.getMessageByID("0000000000"));
+        assertEquals(MessageStore.ID_NOT_FOUND, MessageStore.getMessageByID("0000000000"));
     }
 
     @Test
@@ -163,6 +163,15 @@ public class MessageStoreTest {
     public void testDeleteMessageHashNotFound() {
         assertEquals("Message hash not found.", MessageStore.deleteMessageByHash("99:9:NOHASH"));
         assertEquals(5, MessageStore.getMessageIDs().size());
+    }
+
+    // a long message that was only sent (not stored) must not be the "longest stored message"
+    @Test
+    public void testLongestStoredMessageIgnoresSentMessages() {
+        String veryLong = "This message is much longer than every stored message, but it was only sent, "
+                + "so it must not be returned as the longest stored message.";
+        new Message("9999999999", 5, SENDER, "+27834557896", veryLong).sentMessage(1);
+        assertEquals(TEXT2, MessageStore.getLongestStoredMessage());
     }
 
     @Test

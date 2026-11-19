@@ -1,39 +1,38 @@
 package com.mycompany.poepart1;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 /**
- * Message class for QuickChat (Part 2).
+ * Message class for QuickChat (Part 2 and Part 3).
  * Each Message object holds the details of ONE message:
- * message ID, message number, recipient, message text and message hash.
- * The static lists keep track of every message sent or stored while the
- * program is running.
+ * message ID, message number, sender, recipient, message text and message hash.
+ * In Part 3 the arrays that keep track of all the messages are in the
+ * MessageStore class.
  *
  * @author Student
  */
 public class Message {
 
     // name of the JSON file that stored messages are saved in
-    public static final String JSON_FILE = "messages.json";
-
-    // all messages that were sent while the program is running
-    private static ArrayList<Message> sentMessages = new ArrayList<>();
-
-    // all messages the user chose to store for later
-    private static ArrayList<Message> storedMessages = new ArrayList<>();
+    public static final String JSON_FILE = MessageStore.JSON_FILE;
 
     private String messageID;
     private int messageNumber;
+    private String sender;
     private String recipient;
     private String messageText;
     private String messageHash;
-    private String sender;
+
+    // Used when the sender is not needed (Part 2)
+    public Message(String messageID, int messageNumber, String recipient, String messageText) {
+        this(messageID, messageNumber, "", recipient, messageText);
+    }
 
     // The hash is created automatically as soon as the message is created
-    public Message(String messageID, int messageNumber, String recipient, String messageText) {
+    public Message(String messageID, int messageNumber, String sender, String recipient, String messageText) {
         this.messageID = messageID;
         this.messageNumber = messageNumber;
+        this.sender = sender;
         this.recipient = recipient;
         this.messageText = messageText;
         this.messageHash = createMessageHash();
@@ -88,39 +87,36 @@ public class Message {
      in capital letters. Example: 00:0:HITONIGHT
      */
     public String createMessageHash() {
-    String trimmed = messageText.trim();
-    if (trimmed.isEmpty()) {
-        return (messageID.substring(0, 2) + ":" + messageNumber + ":").toUpperCase();
+        String[] words = messageText.trim().split("\\s+");
+
+        // remove punctuation such as "?" or "," so only letters and numbers are left
+        String firstWord = words[0].replaceAll("[^A-Za-z0-9]", "");
+        String lastWord = words[words.length - 1].replaceAll("[^A-Za-z0-9]", "");
+
+        String firstTwoNumbers = messageID.substring(0, 2);
+        return (firstTwoNumbers + ":" + messageNumber + ":" + firstWord + lastWord).toUpperCase();
     }
-    String[] words = trimmed.split("\\s+");
 
-    // remove punctuation such as "?" or "," so only letters and numbers are left
-    String firstWord = words[0].replaceAll("[^A-Za-z0-9]", "");
-    String lastWord = words[words.length - 1].replaceAll("[^A-Za-z0-9]", "");
-
-    String firstTwoNumbers = messageID.substring(0, 2);
-    return (firstTwoNumbers + ":" + messageNumber + ":" + firstWord + lastWord).toUpperCase();
-}
     /*
      Does what the user chose: 1 = send, 2 = disregard, 3 = store for later.
+     The message is added to the arrays of its group (Part 3).
      Returns the message that must be shown to the user.
      */
     public String sentMessage(int choice) {
-    if (choice == 1) {
-        sentMessages.add(this);
-        MessageStore.addMessage(this, MessageStore.FLAG_SENT);
-        return "Message successfully sent.";
-    } else if (choice == 2) {
-        MessageStore.addMessage(this, MessageStore.FLAG_DISREGARD);
-        return "Press 0 to delete the message.";
-    } else if (choice == 3) {
-        if (storeMessage()) {
-            return "Message successfully stored.";
+        if (choice == 1) {
+            MessageStore.addMessage(this, MessageStore.FLAG_SENT);
+            return "Message successfully sent.";
+        } else if (choice == 2) {
+            MessageStore.addMessage(this, MessageStore.FLAG_DISREGARD);
+            return "Press 0 to delete the message.";
+        } else if (choice == 3) {
+            if (storeMessage()) {
+                return "Message successfully stored.";
+            }
+            return "Message could not be stored.";
         }
-        return "Message could not be stored.";
+        return "Invalid option.";
     }
-    return "Invalid option.";
-}
 
     // Returns the full details of this message in the required order
     public String getDetails() {
@@ -132,36 +128,24 @@ public class Message {
 
     // Returns the details of ALL messages sent while the program is running
     public static String printMessages() {
-        String allMessages = "";
-        for (Message message : sentMessages) {
-            allMessages = allMessages + message.getDetails() + "\n";
-        }
-        return allMessages;
+        return MessageStore.getReport(MessageStore.FLAG_SENT, false);
     }
 
     // Returns how many messages have been sent
     public static int returnTotalMessages() {
-        return sentMessages.size();
+        return MessageStore.getSentMessages().size();
     }
 
-    /*
-     Stores this message by saving all stored messages to messages.json.
-     Returns true if the file was saved. The JSON layout follows the
-     rules on json.org and FileWriter is used as shown in the Oracle docs
-     (see references at the bottom of this file).
-     */
-   public boolean storeMessage() {
-    storedMessages.add(this);
-    MessageStore.addMessage(this, MessageStore.FLAG_STORED);
-    return MessageStore.saveStoredMessagesToJson();
-}
+    // Adds this message to the stored arrays and saves them to messages.json
+    public boolean storeMessage() {
+        MessageStore.addMessage(this, MessageStore.FLAG_STORED);
+        return MessageStore.saveStoredMessagesToJson();
+    }
 
-    // Clears both lists (used by the unit tests so every test starts fresh)
+    // Clears all the arrays (used by the unit tests so every test starts fresh)
     public static void clearAll() {
-    sentMessages.clear();
-    storedMessages.clear();
-    MessageStore.clearAll();
-}
+        MessageStore.clearAll();
+    }
 
     public String getMessageID() {
         return messageID;
@@ -170,35 +154,22 @@ public class Message {
     public String getMessageHash() {
         return messageHash;
     }
-    
-// these are the 5 parameter constructor (used by Part 3 QuickChat and MessageStoreTest)
-public Message(String messageID, int messageNumber, String sender, String recipient, String messageText){
-    this.messageID = messageID;
-    this.messageNumber = messageNumber;
-    this.sender = sender;
-    this.recipient = recipient;
-    this.messageText = messageText;
-    this.messageHash = createMessageHash();
-}
-public String getSender() {
-    return sender;
-}
 
-public String getRecipient() {
-    return recipient;
-}
+    public String getSender() {
+        return sender;
+    }
 
-public String getMessageText() {
-    return messageText;
-}
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public String getMessageText() {
+        return messageText;
+    }
 }
 /* References
-Oracle (2026) FileWriter (Java SE 21 API). Available at:
-https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/FileWriter.html (Accessed: 15 October 2026).
-
-Ecma International (2017) The JSON Data Interchange Syntax (ECMA-404). Available at:
-https://www.json.org/json-en.html (Accessed: 15 October 2026).
-
 Anthropic (2026) Claude (AI assistant) was used to help structure and explain the steps in creating this code. Available at:
-https://claude.ai (Accessed: 15 October 2026).
+https://claude.ai (Accessed: 22 October 2026).
+
+The file saving (FileWriter) and file reading (BufferedReader) references are at the bottom of MessageStore.java.
 */

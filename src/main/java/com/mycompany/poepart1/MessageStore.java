@@ -31,6 +31,10 @@ public class MessageStore {
     public static final String FLAG_DISREGARD = "Disregard";
     public static final String FLAG_STORED = "Stored";
 
+    // shown when a message ID or message hash is not in the arrays
+    public static final String ID_NOT_FOUND = "Message ID not found.";
+    public static final String HASH_NOT_FOUND = "Message hash not found.";
+
     // the arrays asked for in the task
     private static ArrayList<String> sentMessages = new ArrayList<>();
     private static ArrayList<String> disregardedMessages = new ArrayList<>();
@@ -62,59 +66,67 @@ public class MessageStore {
         messageTexts.add(text);
         messageFlags.add(flag);
 
+        getGroup(flag).add(text);
+    }
+
+    // Returns the array that holds the messages with this flag
+    private static ArrayList<String> getGroup(String flag) {
         if (flag.equals(FLAG_SENT)) {
-            sentMessages.add(text);
+            return sentMessages;
         } else if (flag.equals(FLAG_DISREGARD)) {
-            disregardedMessages.add(text);
-        } else if (flag.equals(FLAG_STORED)) {
-            storedMessages.add(text);
+            return disregardedMessages;
         }
+        return storedMessages;
     }
 
     // ---------- features for the Stored Messages menu ----------
 
     // (a) Sender and recipient of every stored message
     public static String getSendersAndRecipients() {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < messageFlags.size(); i++) {
             if (messageFlags.get(i).equals(FLAG_STORED)) {
-                result = result + "Sender: " + senders.get(i)
-                        + " | Recipient: " + recipients.get(i) + "\n";
+                result.append("Sender: ").append(senders.get(i))
+                        .append(" | Recipient: ").append(recipients.get(i)).append("\n");
             }
         }
-        return result;
+        return result.toString();
     }
 
-    // (b) The longest stored message
+    // (b) The longest stored message, found by searching the parallel arrays
     public static String getLongestStoredMessage() {
-        if (storedMessages.isEmpty()) {
-            return "There are no stored messages.";
-        }
-        String longest = storedMessages.get(0);
-        for (int i = 1; i < storedMessages.size(); i++) {
-            if (storedMessages.get(i).length() > longest.length()) {
-                longest = storedMessages.get(i);
+        int longestPosition = -1;
+        for (int i = 0; i < messageTexts.size(); i++) {
+            if (messageFlags.get(i).equals(FLAG_STORED)) {
+                if (longestPosition == -1
+                        || messageTexts.get(i).length() > messageTexts.get(longestPosition).length()) {
+                    longestPosition = i;
+                }
             }
         }
-        return longest;
+        if (longestPosition == -1) {
+            return "There are no stored messages.";
+        }
+        return messageTexts.get(longestPosition);
     }
 
     // (c) Search for a message ID - the message at the same position is returned
     public static String getMessageByID(String id) {
-        int position = messageIDs.indexOf(id);
-        if (position == -1) {
-            return "Message ID not found.";
-        }
-        return messageTexts.get(position);
+        return lookUpByID(id, messageTexts);
     }
 
     // (c) Search for a message ID - the recipient at the same position is returned
     public static String getRecipientByID(String id) {
+        return lookUpByID(id, recipients);
+    }
+
+    // Finds the ID in messageIDs and returns the value at that position in the given parallel array
+    private static String lookUpByID(String id, ArrayList<String> parallelArray) {
         int position = messageIDs.indexOf(id);
         if (position == -1) {
-            return "Message ID not found.";
+            return ID_NOT_FOUND;
         }
-        return recipients.get(position);
+        return parallelArray.get(position);
     }
 
     // (d) All messages (sent or stored) for one recipient. Disregarded ones are left out.
@@ -134,7 +146,7 @@ public class MessageStore {
     public static String deleteMessageByHash(String hash) {
         int position = messageHashes.indexOf(hash);
         if (position == -1) {
-            return "Message hash not found.";
+            return HASH_NOT_FOUND;
         }
 
         String text = messageTexts.get(position);
@@ -147,12 +159,8 @@ public class MessageStore {
         messageTexts.remove(position);
         messageFlags.remove(position);
 
-        if (flag.equals(FLAG_SENT)) {
-            sentMessages.remove(text);
-        } else if (flag.equals(FLAG_DISREGARD)) {
-            disregardedMessages.remove(text);
-        } else if (flag.equals(FLAG_STORED)) {
-            storedMessages.remove(text);
+        getGroup(flag).remove(text);
+        if (flag.equals(FLAG_STORED)) {
             saveStoredMessagesToJson(); // keep the file the same as the array
         }
         return "Message: \"" + text + "\" successfully deleted.";
@@ -160,19 +168,19 @@ public class MessageStore {
 
     // (f) Report with the full details of all messages that have the given flag
     public static String getReport(String flag, boolean showSender) {
-        String report = "";
+        StringBuilder report = new StringBuilder();
         for (int i = 0; i < messageFlags.size(); i++) {
             if (messageFlags.get(i).equals(flag)) {
-                report = report + "Message ID: " + messageIDs.get(i) + "\n"
-                        + "Message Hash: " + messageHashes.get(i) + "\n";
+                report.append("Message ID: ").append(messageIDs.get(i)).append("\n");
+                report.append("Message Hash: ").append(messageHashes.get(i)).append("\n");
                 if (showSender) {
-                    report = report + "Sender: " + senders.get(i) + "\n";
+                    report.append("Sender: ").append(senders.get(i)).append("\n");
                 }
-                report = report + "Recipient: " + recipients.get(i) + "\n"
-                        + "Message: " + messageTexts.get(i) + "\n\n";
+                report.append("Recipient: ").append(recipients.get(i)).append("\n");
+                report.append("Message: ").append(messageTexts.get(i)).append("\n\n");
             }
         }
-        return report;
+        return report.toString();
     }
 
     // ---------- JSON file: saving and reading ----------
@@ -183,27 +191,27 @@ public class MessageStore {
      shown in the Oracle docs (see references at the bottom of this file).
      */
     public static boolean saveStoredMessagesToJson() {
-        String json = "[\n";
+        StringBuilder json = new StringBuilder("[\n");
         boolean firstMessage = true;
         for (int i = 0; i < messageFlags.size(); i++) {
             if (messageFlags.get(i).equals(FLAG_STORED)) {
                 if (!firstMessage) {
-                    json = json + ",\n";
+                    json.append(",\n");
                 }
                 firstMessage = false;
-                json = json + "  {\n"
-                        + "    \"messageID\": \"" + clean(messageIDs.get(i)) + "\",\n"
-                        + "    \"messageHash\": \"" + clean(messageHashes.get(i)) + "\",\n"
-                        + "    \"sender\": \"" + clean(senders.get(i)) + "\",\n"
-                        + "    \"recipient\": \"" + clean(recipients.get(i)) + "\",\n"
-                        + "    \"message\": \"" + clean(messageTexts.get(i)) + "\"\n"
-                        + "  }";
+                json.append("  {\n");
+                json.append("    \"messageID\": \"").append(clean(messageIDs.get(i))).append("\",\n");
+                json.append("    \"messageHash\": \"").append(clean(messageHashes.get(i))).append("\",\n");
+                json.append("    \"sender\": \"").append(clean(senders.get(i))).append("\",\n");
+                json.append("    \"recipient\": \"").append(clean(recipients.get(i))).append("\",\n");
+                json.append("    \"message\": \"").append(clean(messageTexts.get(i))).append("\"\n");
+                json.append("  }");
             }
         }
-        json = json + "\n]";
+        json.append("\n]");
 
         try (FileWriter writer = new FileWriter(JSON_FILE)) {
-            writer.write(json);
+            writer.write(json.toString());
             return true;
         } catch (IOException e) {
             System.out.println("Error saving file: " + e.getMessage());
@@ -280,22 +288,22 @@ public class MessageStore {
 
     // Turns the escaped JSON text back into normal text (the opposite of clean)
     private static String unclean(String text) {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             if (c == '\\' && i + 1 < text.length()) {
                 i++;
                 char next = text.charAt(i);
                 if (next == 'n') {
-                    result = result + "\n";
+                    result.append("\n");
                 } else {
-                    result = result + next; // \" becomes " and \\ becomes \
+                    result.append(next); // \" becomes " and \\ becomes \
                 }
             } else {
-                result = result + c;
+                result.append(c);
             }
         }
-        return result;
+        return result.toString();
     }
 
     // ---------- getters and clearing ----------
