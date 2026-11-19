@@ -8,17 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * MessageStore (Part 3) - keeps all the arrays for QuickChat.
- *
- * PARALLEL ARRAYS: messageIDs, messageHashes, senders, recipients,
- * messageTexts and messageFlags always have the same length. Position 0 in
- * every one of them belongs to the same message, position 1 to the next one,
- * and so on. So once a message is found in one array (for example by its hash),
- * its other details are at the same position in the other arrays.
- *
- * The three arrays the task asks for (sentMessages, disregardedMessages and
- * storedMessages) hold the text of the messages in each group.
- *
  * @author Student
  */
 public class MessageStore {
@@ -26,16 +15,16 @@ public class MessageStore {
     // name of the JSON file that stored messages are saved in and read from
     public static final String JSON_FILE = "messages.json";
 
-    // the three flags a message can have
+    // 3 flags a message can have
     public static final String FLAG_SENT = "Sent";
     public static final String FLAG_DISREGARD = "Disregard";
     public static final String FLAG_STORED = "Stored";
 
-    // shown when a message ID or message hash is not in the arrays
+    // shows when a message ID or message hash is not in the arrays
     public static final String ID_NOT_FOUND = "Message ID not found.";
     public static final String HASH_NOT_FOUND = "Message hash not found.";
 
-    // the arrays asked for in the task
+    // the arrays 
     private static ArrayList<String> sentMessages = new ArrayList<>();
     private static ArrayList<String> disregardedMessages = new ArrayList<>();
     private static ArrayList<String> storedMessages = new ArrayList<>();
@@ -47,8 +36,6 @@ public class MessageStore {
     private static ArrayList<String> recipients = new ArrayList<>();
     private static ArrayList<String> messageTexts = new ArrayList<>();
     private static ArrayList<String> messageFlags = new ArrayList<>();
-
-    // ---------- populating the arrays (nothing is hard-coded) ----------
 
     // Adds a message to the parallel arrays and to the array of its group
     public static void addMessage(Message message, String flag) {
@@ -78,8 +65,6 @@ public class MessageStore {
         }
         return storedMessages;
     }
-
-    // ---------- features for the Stored Messages menu ----------
 
     // (a) Sender and recipient of every stored message
     public static String getSendersAndRecipients() {
@@ -142,7 +127,7 @@ public class MessageStore {
         return found;
     }
 
-    // (e) Delete a message using its hash. The message is removed from every array.
+    // (e) Delete a message using its hash. The message is removed in every array.
     public static String deleteMessageByHash(String hash) {
         int position = messageHashes.indexOf(hash);
         if (position == -1) {
@@ -161,7 +146,7 @@ public class MessageStore {
 
         getGroup(flag).remove(text);
         if (flag.equals(FLAG_STORED)) {
-            saveStoredMessagesToJson(); // keep the file the same as the array
+            saveStoredMessagesToJson();
         }
         return "Message: \"" + text + "\" successfully deleted.";
     }
@@ -183,13 +168,8 @@ public class MessageStore {
         return report.toString();
     }
 
-    // ---------- JSON file: saving and reading ----------
+    // JSON file saving and reading 
 
-    /*
-     Saves every stored message to messages.json. Returns true if it worked.
-     The JSON layout follows the rules on json.org and FileWriter is used as
-     shown in the Oracle docs (see references at the bottom of this file).
-     */
     public static boolean saveStoredMessagesToJson() {
         StringBuilder json = new StringBuilder("[\n");
         boolean firstMessage = true;
@@ -221,10 +201,8 @@ public class MessageStore {
 
     /*
      Reads messages.json into the arrays. Every message in the file is added
-     as a stored message, unless its ID is already in the arrays (so nothing
-     is added twice). Returns how many messages were added.
-     The file is read line by line with a BufferedReader (see the Oracle
-     reference at the bottom of this file). "message" is the last field of each
+     as a stored message, unless its ID is already in the arrays. Returns how many messages were added.
+     The file is read line by line with a BufferedReader. "message" is the last field of each
      entry in the file, so once it is read the whole entry has been collected.
      */
     public static int readStoredMessagesFromJson() {
@@ -257,7 +235,7 @@ public class MessageStore {
                         addToArrays(id, hash, sender, recipient, text, FLAG_STORED);
                         added++;
                     }
-                    // clear the details ready for the next entry in the file
+                    // clear the details ready for the next entry in this file
                     id = "";
                     hash = "";
                     sender = "";
@@ -271,7 +249,7 @@ public class MessageStore {
         return added;
     }
 
-    // Gets the text between the quotes of a line like:  "recipient": "+27834557896",
+    // Gets the text between the quotes of a line
     private static String getJsonValue(String line) {
         String value = line.substring(line.indexOf(":") + 1).trim();
         if (value.endsWith(",")) {
@@ -286,7 +264,7 @@ public class MessageStore {
         return text.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
     }
 
-    // Turns the escaped JSON text back into normal text (the opposite of clean)
+    // Turns the escaped JSON text back into normal text
     private static String unclean(String text) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < text.length(); i++) {
@@ -297,7 +275,7 @@ public class MessageStore {
                 if (next == 'n') {
                     result.append("\n");
                 } else {
-                    result.append(next); // \" becomes " and \\ becomes \
+                    result.append(next);
                 }
             } else {
                 result.append(c);
@@ -306,7 +284,7 @@ public class MessageStore {
         return result.toString();
     }
 
-    // ---------- getters and clearing ----------
+    // getters and clearing section
 
     public static ArrayList<String> getSentMessages() {
         return sentMessages;
@@ -328,7 +306,7 @@ public class MessageStore {
         return messageIDs;
     }
 
-    // Clears every array (used by the unit tests so every test starts fresh)
+    // Clears every array
     public static void clearAll() {
         sentMessages.clear();
         disregardedMessages.clear();
@@ -354,6 +332,7 @@ https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayList
 Ecma International (2017) The JSON Data Interchange Syntax (ECMA-404). Available at:
 https://www.json.org/json-en.html (Accessed: 22 October 2026).
 
-Anthropic (2026) Claude (AI assistant) was used to help plan, structure and explain this code. Available at:
-https://claude.ai (Accessed: 22 October 2026).
+freeCodeCamp.org (2022) Java Programming for Beginners – Full Course. Available at: https://www.youtube.com/watch?v=A74TOX803D0 (Accessed: 9 September 2026).
+
+Saini, M. (2018) Java NetBeans Tutorial | chat application in java. Available at: https://www.youtube.com/watch?v=dlacc6831zw (Accessed: 9 September 2026).
 */
