@@ -24,10 +24,8 @@ public class MessageStoreTest {
     private static final String TEXT5 = "Ok, I am leaving without you.";
 
     /*
-     Runs before every test: starts with empty arrays and no JSON file, then
-     adds the test data (the developer enters it here, it is not hard-coded
-     in the application). sentMessage(1) = Sent, (2) = Disregard, (3) = Stored.
-     Message 4's value "0838884567" is used as its message ID and recipient.
+     Runs before every test and starts with empty arrays and no JSON file, then
+     adds the test data
      */
     @BeforeEach
     public void setUp() {
@@ -41,7 +39,7 @@ public class MessageStoreTest {
         new Message("5678901234", 4, SENDER, "+27838884567", TEXT5).sentMessage(3);
     }
 
-    // ---------- the six tests from the task ----------
+    //the 6 tests from the poe part
 
     @Test
     public void testSentMessagesArrayCorrectlyPopulated() {
@@ -92,7 +90,7 @@ public class MessageStoreTest {
         assertEquals(expected, Message.printMessages());
     }
 
-    // ---------- the other arrays ----------
+    //the other arrays
 
     @Test
     public void testDisregardedMessagesArrayCorrectlyPopulated() {
@@ -118,7 +116,7 @@ public class MessageStoreTest {
         assertEquals(expected, MessageStore.getMessageHashes());
     }
 
-    // ---------- other Stored Messages menu features ----------
+    //Stored Messages menu features
 
     @Test
     public void testSendersAndRecipientsOfStoredMessages() {
@@ -142,7 +140,7 @@ public class MessageStoreTest {
         assertEquals(expected, MessageStore.getReport(MessageStore.FLAG_STORED, true));
     }
 
-    // ---------- failure cases ----------
+    // cases for failure
 
     @Test
     public void testSearchForMessageIDNotFound() {
@@ -165,7 +163,7 @@ public class MessageStoreTest {
         assertEquals(5, MessageStore.getMessageIDs().size());
     }
 
-    // a long message that was only sent (not stored) must not be the "longest stored message"
+    // a long message that was only sent and not stored must not be the longest stored message
     @Test
     public void testLongestStoredMessageIgnoresSentMessages() {
         String veryLong = "This message is much longer than every stored message, but it was only sent, "
@@ -180,7 +178,7 @@ public class MessageStoreTest {
         assertEquals("There are no stored messages.", MessageStore.getLongestStoredMessage());
     }
 
-    // ---------- JSON file ----------
+    //JSON file section
 
     // the stored messages are saved to messages.json, so reading it into empty arrays gives them back
     @Test

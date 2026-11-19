@@ -171,5 +171,7 @@ public class Message {
 Anthropic (2026) Claude (AI assistant) was used to help structure and explain the steps in creating this code. Available at:
 https://claude.ai (Accessed: 22 October 2026).
 
-The file saving (FileWriter) and file reading (BufferedReader) references are at the bottom of MessageStore.java.
+freeCodeCamp.org (2022) Java Programming for Beginners – Full Course. Available at: https://www.youtube.com/watch?v=A74TOX803D0 (Accessed: 9 September 2026).
+
+Saini, M. (2018) Java NetBeans Tutorial | chat application in java. Available at: https://www.youtube.com/watch?v=dlacc6831zw (Accessed: 9 September 2026).
 */
