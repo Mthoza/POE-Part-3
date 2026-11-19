@@ -1,19 +1,22 @@
 package com.mycompany.poepart1;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * QuickChat (Part 2) - the menu and the loops.
- * This is only run once the user has logged in successfully.
+ * QuickChat (Parts 2 & 3) - main menu, message entry, and Stored Messages menu.
+ * Runs once the user has logged in successfully.
  *
  * @author Student
  */
 public class QuickChat {
 
-    public static void start(Scanner input) {
+    public static void start(Scanner input, String sender) {
+        // Load any previously stored messages from messages.json into the arrays
+        MessageStore.readStoredMessagesFromJson();
+
         System.out.println("Welcome to QuickChat.");
 
-        // the user decides at the start how many messages they want to enter
         int numMessages = 0;
         while (numMessages < 1) {
             System.out.println("How many messages do you wish to enter?");
@@ -26,55 +29,132 @@ public class QuickChat {
         boolean messagesEntered = false;
         int choice = 0;
 
-        // the application keeps running until the user selects 3 (Quit)
+        // Main menu loop: runs until the user selects 3 (Quit)
         while (choice != 3) {
             System.out.println("\nPlease choose an option:");
             System.out.println("1) Send Messages");
             System.out.println("2) Show recently sent messages");
             System.out.println("3) Quit");
+            System.out.println("4) Stored Messages");
             choice = readNumber(input);
 
             if (choice == 1) {
                 if (messagesEntered) {
                     System.out.println("You have already entered all " + numMessages + " messages.");
                 } else {
-                    enterMessages(input, numMessages);
+                    enterMessages(input, numMessages, sender);
                     messagesEntered = true;
                 }
             } else if (choice == 2) {
-                System.out.println("Coming Soon.");
+                String sent = Message.printMessages();
+                if (sent.isEmpty()) {
+                    System.out.println("No messages have been sent yet.");
+                } else {
+                    System.out.println("\nRecently Sent Messages:\n" + sent);
+                }
             } else if (choice == 3) {
                 System.out.println("Goodbye!");
+            } else if (choice == 4) {
+                storedMessagesMenu(input);
             } else {
-                System.out.println("Invalid option, please enter 1, 2 or 3.");
+                System.out.println("Invalid option, please enter 1, 2, 3 or 4.");
             }
         }
     }
 
-    // Lets the user enter the set number of messages (for loop)
-    private static void enterMessages(Scanner input, int numMessages) {
+    // Submenu for Option 4: Stored Messages (Requirements 2a - 2f)
+    private static void storedMessagesMenu(Scanner input) {
+        // read messages.json into the arrays and show the stored messages to the user
+        int added = MessageStore.readStoredMessagesFromJson();
+        ArrayList<String> stored = MessageStore.getStoredMessages();
+        System.out.println("\nStored messages read from " + MessageStore.JSON_FILE + " (" + added + " new):");
+        if (stored.isEmpty()) {
+            System.out.println("There are no stored messages yet.");
+        }
+        for (int i = 0; i < stored.size(); i++) {
+            System.out.println((i + 1) + ". " + stored.get(i));
+        }
+
+        String subChoice = "";
+        while (!subChoice.equals("g")) {
+            System.out.println("\n--- Stored Messages Menu ---");
+            System.out.println("a) Display the sender and recipient of all stored messages");
+            System.out.println("b) Display the longest stored message");
+            System.out.println("c) Search for a message ID");
+            System.out.println("d) Search for all messages for a particular recipient");
+            System.out.println("e) Delete a message using the message hash");
+            System.out.println("f) Display a report of all stored messages");
+            System.out.println("g) Return to main menu");
+            subChoice = input.nextLine().trim().toLowerCase();
+
+            if (subChoice.equals("a")) {
+                String result = MessageStore.getSendersAndRecipients();
+                System.out.println(result.isEmpty() ? "No stored messages found." : result);
+
+            } else if (subChoice.equals("b")) {
+                System.out.println("Longest stored message:\n" + MessageStore.getLongestStoredMessage());
+
+            } else if (subChoice.equals("c")) {
+                System.out.println("Enter the Message ID to search:");
+                String id = input.nextLine().trim();
+                String msg = MessageStore.getMessageByID(id);
+                if (msg.equals(MessageStore.ID_NOT_FOUND)) {
+                    System.out.println(msg);
+                } else {
+                    System.out.println("Recipient: " + MessageStore.getRecipientByID(id));
+                    System.out.println("Message: " + msg);
+                }
+
+            } else if (subChoice.equals("d")) {
+                System.out.println("Enter the recipient cell number (e.g. +27838884567):");
+                String recipient = input.nextLine().trim();
+                ArrayList<String> matches = MessageStore.getMessagesForRecipient(recipient);
+                if (matches.isEmpty()) {
+                    System.out.println("No messages found for recipient " + recipient + ".");
+                } else {
+                    System.out.println("Messages for " + recipient + ":");
+                    for (String m : matches) {
+                        System.out.println("- " + m);
+                    }
+                }
+
+            } else if (subChoice.equals("e")) {
+                System.out.println("Enter the Message Hash to delete (e.g. 23:1:WHERETIME):");
+                String hash = input.nextLine().trim();
+                System.out.println(MessageStore.deleteMessageByHash(hash));
+
+            } else if (subChoice.equals("f")) {
+                String report = MessageStore.getReport(MessageStore.FLAG_STORED, true);
+                System.out.println(report.isEmpty() ? "No stored messages to report." : "\n" + report);
+
+            } else if (!subChoice.equals("g")) {
+                System.out.println("Invalid option, please choose a, b, c, d, e, f, or g.");
+            }
+        }
+    }
+
+    // Lets the user enter the set number of messages
+    private static void enterMessages(Scanner input, int numMessages, String sender) {
         for (int i = 0; i < numMessages; i++) {
             System.out.println("\nMessage " + (i + 1) + " of " + numMessages);
 
-            // keep asking until the recipient number is correct
             String recipient = "";
             boolean recipientOk = false;
             while (!recipientOk) {
                 System.out.println("Please enter the recipient cell number (e.g. +27718693002):");
                 recipient = input.nextLine();
-                Message check = new Message("0000000000", i, recipient, "check");
+                Message check = new Message("0000000000", i, sender, recipient, "check");
                 String result = check.checkRecipientCell();
                 System.out.println(result);
                 recipientOk = result.equals("Cell phone number successfully captured.");
             }
 
-            // keep asking until the message is not longer than 250 characters
             String text = "";
             boolean textOk = false;
             while (!textOk) {
                 System.out.println("Please enter your message:");
                 text = input.nextLine();
-                Message check = new Message("0000000000", i, recipient, text);
+                Message check = new Message("0000000000", i, sender, recipient, text);
                 String result = check.checkMessageLength();
                 if (result.equals("Message ready to send.")) {
                     textOk = true;
@@ -84,8 +164,7 @@ public class QuickChat {
                 System.out.println(result);
             }
 
-            // the loop counter i is the message number, so the first message is number 0
-            Message message = new Message(Message.generateMessageID(), i, recipient, text);
+            Message message = new Message(Message.generateMessageID(), i, sender, recipient, text);
             System.out.println(message.getMessageIDStatus());
 
             int sendChoice = 0;
@@ -114,7 +193,6 @@ public class QuickChat {
         System.out.println("Total messages sent: " + Message.returnTotalMessages());
     }
 
-    // Reads a whole number from the user without crashing if they type letters
     private static int readNumber(Scanner input) {
         int number = 0;
         boolean valid = false;

@@ -63,8 +63,8 @@ public class PoePart1 {
             
             // Part 2: users can only use QuickChat if they logged in successfully
             if (login.loginUser(loginUsername, loginPassword)) {
-                QuickChat.start(input);
-            }
+                QuickChat.start(input, phoneNumber);
+                }
         } else {
             System.out.println("\nRegistration was not successful. Please restart and correct the details above.");
         }

@@ -1,40 +1,38 @@
 package com.mycompany.poepart1;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Random;
 
 /**
- * Message class for QuickChat (Part 2).
+ * Message class for QuickChat (Part 2 and Part 3).
  * Each Message object holds the details of ONE message:
- * message ID, message number, recipient, message text and message hash.
- * The static lists keep track of every message sent or stored while the
- * program is running.
+ * message ID, message number, sender, recipient, message text and message hash.
+ * In Part 3 the arrays that keep track of all the messages are in the
+ * MessageStore class.
  *
  * @author Student
  */
 public class Message {
 
     // name of the JSON file that stored messages are saved in
-    public static final String JSON_FILE = "messages.json";
-
-    // all messages that were sent while the program is running
-    private static ArrayList<Message> sentMessages = new ArrayList<>();
-
-    // all messages the user chose to store for later
-    private static ArrayList<Message> storedMessages = new ArrayList<>();
+    public static final String JSON_FILE = MessageStore.JSON_FILE;
 
     private String messageID;
     private int messageNumber;
+    private String sender;
     private String recipient;
     private String messageText;
     private String messageHash;
 
-    // The hash is created automatically as soon as the message is created
+    // Used when the sender is not needed (Part 2)
     public Message(String messageID, int messageNumber, String recipient, String messageText) {
+        this(messageID, messageNumber, "", recipient, messageText);
+    }
+
+    // The hash is created automatically as soon as the message is created
+    public Message(String messageID, int messageNumber, String sender, String recipient, String messageText) {
         this.messageID = messageID;
         this.messageNumber = messageNumber;
+        this.sender = sender;
         this.recipient = recipient;
         this.messageText = messageText;
         this.messageHash = createMessageHash();
@@ -101,13 +99,15 @@ public class Message {
 
     /*
      Does what the user chose: 1 = send, 2 = disregard, 3 = store for later.
+     The message is added to the arrays of its group (Part 3).
      Returns the message that must be shown to the user.
      */
     public String sentMessage(int choice) {
         if (choice == 1) {
-            sentMessages.add(this);
+            MessageStore.addMessage(this, MessageStore.FLAG_SENT);
             return "Message successfully sent.";
         } else if (choice == 2) {
+            MessageStore.addMessage(this, MessageStore.FLAG_DISREGARD);
             return "Press 0 to delete the message.";
         } else if (choice == 3) {
             if (storeMessage()) {
@@ -128,62 +128,23 @@ public class Message {
 
     // Returns the details of ALL messages sent while the program is running
     public static String printMessages() {
-        String allMessages = "";
-        for (Message message : sentMessages) {
-            allMessages = allMessages + message.getDetails() + "\n";
-        }
-        return allMessages;
+        return MessageStore.getReport(MessageStore.FLAG_SENT, false);
     }
 
     // Returns how many messages have been sent
     public static int returnTotalMessages() {
-        return sentMessages.size();
+        return MessageStore.getSentMessages().size();
     }
 
-    /*
-     Stores this message by saving all stored messages to messages.json.
-     Returns true if the file was saved. The JSON layout follows the
-     rules on json.org and FileWriter is used as shown in the Oracle docs
-     (see references at the bottom of this file).
-     */
+    // Adds this message to the stored arrays and saves them to messages.json
     public boolean storeMessage() {
-        storedMessages.add(this);
-
-        String json = "[\n";
-        for (int i = 0; i < storedMessages.size(); i++) {
-            Message m = storedMessages.get(i);
-            json = json + "  {\n";
-            json = json + "    \"messageID\": \"" + clean(m.messageID) + "\",\n";
-            json = json + "    \"messageNumber\": " + m.messageNumber + ",\n";
-            json = json + "    \"messageHash\": \"" + clean(m.messageHash) + "\",\n";
-            json = json + "    \"recipient\": \"" + clean(m.recipient) + "\",\n";
-            json = json + "    \"message\": \"" + clean(m.messageText) + "\"\n";
-            json = json + "  }";
-            if (i < storedMessages.size() - 1) {
-                json = json + ",";
-            }
-            json = json + "\n";
-        }
-        json = json + "]";
-
-        try (FileWriter writer = new FileWriter(JSON_FILE)) {
-            writer.write(json);
-            return true;
-        } catch (IOException e) {
-            System.out.println("Error saving file: " + e.getMessage());
-            return false;
-        }
+        MessageStore.addMessage(this, MessageStore.FLAG_STORED);
+        return MessageStore.saveStoredMessagesToJson();
     }
 
-    // Escapes quotes, backslashes and new lines so the text is valid inside JSON
-    private static String clean(String text) {
-        return text.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-    }
-
-    // Clears both lists (used by the unit tests so every test starts fresh)
+    // Clears all the arrays (used by the unit tests so every test starts fresh)
     public static void clearAll() {
-        sentMessages.clear();
-        storedMessages.clear();
+        MessageStore.clearAll();
     }
 
     public String getMessageID() {
@@ -193,14 +154,22 @@ public class Message {
     public String getMessageHash() {
         return messageHash;
     }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public String getMessageText() {
+        return messageText;
+    }
 }
 /* References
-Oracle (2026) FileWriter (Java SE 21 API). Available at:
-https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/FileWriter.html (Accessed: 15 October 2026).
-
-Ecma International (2017) The JSON Data Interchange Syntax (ECMA-404). Available at:
-https://www.json.org/json-en.html (Accessed: 15 October 2026).
-
 Anthropic (2026) Claude (AI assistant) was used to help structure and explain the steps in creating this code. Available at:
-https://claude.ai (Accessed: 15 October 2026).
+https://claude.ai (Accessed: 22 October 2026).
+
+The file saving (FileWriter) and file reading (BufferedReader) references are at the bottom of MessageStore.java.
 */
