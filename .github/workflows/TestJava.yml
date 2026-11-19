@@ -15,7 +15,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: '21'
 
       - name: Run unit tests
-        run: mvn -B test
+        run: |
+          if [ -f "pom.xml" ]; then
+            mvn -B test
+          elif [ -f "PoePart3/pom.xml" ]; then
+            mvn -B -f PoePart3/pom.xml test
+          else
+            echo "pom.xml not found"
+            exit 1
+          fi
